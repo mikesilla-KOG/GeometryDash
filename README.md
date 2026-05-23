@@ -4,7 +4,7 @@ Geometry Dash Neon Rush is a self-contained HTML5 Canvas browser game inspired b
 
 ## How to Play
 
-1. Open `/home/runner/work/GeometryDash/GeometryDash/index.html` in any modern browser.
+1. Open `index.html` from your local clone in any modern browser.
 2. Press **Start Game**.
 3. Controls:
    - **Space / Click / Tap**: jump, thrust, or flip gravity depending on form
