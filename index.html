@@ -257,6 +257,7 @@
       // Utilities
       // ------------------------------------------------------------
       const storageKey = "geometry-dash-neon-rush-high-score";
+      const MAX_FRAME_DELTA = 1 / 30;
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
       const rand = (min, max) => min + Math.random() * (max - min);
       const pick = (items) => items[(Math.random() * items.length) | 0];
@@ -1161,14 +1162,15 @@
           ctx.fillStyle = "rgba(5, 8, 22, 0.48)";
           ctx.fillRect(0, 0, world.width, world.height);
           ctx.fillStyle = "#ffe66d";
-          ctx.font = "700 44px Arial";
+          ctx.font = `700 ${Math.max(28, Math.round(world.unit * 1.1))}px Arial`;
           ctx.textAlign = "center";
           ctx.fillText("PAUSED", world.width / 2, world.height / 2);
         }
       }
 
       function tick(now) {
-        const dt = Math.min((now - game.lastTime) / 1000, 0.033);
+        // Cap delta time so one long frame does not cause unfair physics jumps or missed collisions.
+        const dt = Math.min((now - game.lastTime) / 1000, MAX_FRAME_DELTA);
         game.lastTime = now;
         game.dt = dt;
 
