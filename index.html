@@ -245,10 +245,10 @@
       const restartButton = document.getElementById("restartButton");
       const menuButton = document.getElementById("menuButton");
 
-      const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+      const pixelRatio = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
       function resizeCanvas() {
-        canvas.width = Math.floor(window.innerWidth * DPR);
-        canvas.height = Math.floor(window.innerHeight * DPR);
+        canvas.width = Math.floor(window.innerWidth * pixelRatio);
+        canvas.height = Math.floor(window.innerHeight * pixelRatio);
       }
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
@@ -257,10 +257,15 @@
       // Utilities
       // ------------------------------------------------------------
       const storageKey = "geometry-dash-neon-rush-high-score";
+      // Maximum frame time to prevent physics instability from lag spikes.
       const MAX_FRAME_DELTA = 1 / 30;
+      const MIN_SPIKE_COUNT = 1;
+      const MAX_RANDOM_SPIKE_COUNT = 4;
+      const VERTICAL_COLLISION_TOLERANCE = 12;
+      const HORIZONTAL_COLLISION_TOLERANCE = 8;
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
       const rand = (min, max) => min + Math.random() * (max - min);
-      const pick = (items) => items[(Math.random() * items.length) | 0];
+      const pick = (items) => items[Math.floor(Math.random() * items.length)];
       const highScore = {
         get() {
           return Number(localStorage.getItem(storageKey) || 0);
@@ -560,8 +565,8 @@
       };
 
       function updateWorldMetrics() {
-        world.width = canvas.width / DPR;
-        world.height = canvas.height / DPR;
+        world.width = canvas.width / pixelRatio;
+        world.height = canvas.height / pixelRatio;
         world.unit = clamp(Math.round(world.height * 0.06), 28, 54);
         world.groundY = world.height - world.unit * 2.2;
         world.ceilingY = world.unit * 1.5;
@@ -633,7 +638,7 @@
         let x = startX;
 
         if (pattern === "spikes") {
-          const count = earlyGame ? pick([1, 1, 2, 2]) : 1 + ((Math.random() * 4) | 0);
+          const count = earlyGame ? pick([1, 1, 2, 2]) : MIN_SPIKE_COUNT + Math.floor(Math.random() * MAX_RANDOM_SPIKE_COUNT);
           for (let i = 0; i < count; i += 1) {
             addObstacle({
               type: "spike",
@@ -762,21 +767,21 @@
         const prevTop = prevY;
         const obstacleBottom = obstacle.y + obstacle.height;
 
-        if (prevBottom <= obstacle.y + 12 && player.vy >= 0) {
+        if (prevBottom <= obstacle.y + VERTICAL_COLLISION_TOLERANCE && player.vy >= 0) {
           player.y = obstacle.y - player.height;
           player.vy = 0;
           player.grounded = true;
           return true;
         }
 
-        if (prevTop >= obstacleBottom - 12 && player.vy <= 0) {
+        if (prevTop >= obstacleBottom - VERTICAL_COLLISION_TOLERANCE && player.vy <= 0) {
           player.y = obstacleBottom;
           player.vy = 0;
           player.ceilinged = true;
           return true;
         }
 
-        if (prevX + playerRect.width <= obstacle.x + 8) {
+        if (prevX + playerRect.width <= obstacle.x + HORIZONTAL_COLLISION_TOLERANCE) {
           killPlayer();
           return true;
         }
@@ -841,7 +846,7 @@
       // Rendering
       // ------------------------------------------------------------
       function clearCanvas() {
-        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
         ctx.clearRect(0, 0, world.width, world.height);
       }
 
@@ -1169,7 +1174,7 @@
       }
 
       function tick(now) {
-        // Cap delta time so one long frame does not cause unfair physics jumps or missed collisions.
+        // Convert milliseconds to seconds, then cap delta so one long frame does not cause unfair physics jumps.
         const dt = Math.min((now - game.lastTime) / 1000, MAX_FRAME_DELTA);
         game.lastTime = now;
         game.dt = dt;
